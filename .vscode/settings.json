@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "typeinfo": "c",
+        "fs.h": "c",
+        "user.h": "c"
+    }
+}
