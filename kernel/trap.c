@@ -22,6 +22,34 @@ trapinit(void)
   initlock(&tickslock, "time");
 }
 
+int cow_fault(pagetable_t pagetable, uint64 va){
+  if(va >= MAXVA) return -1;
+
+  pte_t *pte=walk(pagetable,va,0);
+  if(pte==0) return -1;
+
+  if((*pte & PTE_U) == 0 || (*pte & PTE_V) == 0) return -1;
+
+  uint64 pa1=PTE2PA(*pte);
+  uint64 pa2=(uint64)kalloc();
+  if(pa2==0){
+    printf("cow kalloc failed\n");
+    return -1;
+  }
+
+  memmove((void*)pa2,(void*)pa1,PGSIZE);
+
+  *pte |=PTE_W;
+  *pte &=~PTE_COW;
+  uint flags=PTE_FLAGS(*pte);
+  uvmunmap(pagetable,va,1,0);
+  mappages(pagetable,va,4096,pa2,flags);
+  //*pte =PA2PTE(pa2)|PTE_V|PTE_U|PTE_R|PTE_W|PTE_X;
+
+  kfree((void*)pa1); //decrement ref and kfree if ref is 0
+  return 0;
+}
+
 // set up to take exceptions and traps while in the kernel.
 void
 trapinithart(void)
@@ -65,6 +93,10 @@ usertrap(void)
     intr_on();
 
     syscall();
+  } else if(r_scause() == 0xf){
+    if(cow_fault(p->pagetable,PGROUNDDOWN(r_stval())) < 0){
+      p->killed=1;
+    }
   } else if((which_dev = devintr()) != 0){
     // ok
   } else {

@@ -24,10 +24,14 @@ argfd(int n, int *pfd, struct file **pf)
   int fd;
   struct file *f;
 
-  if(argint(n, &fd) < 0)
+  if(argint(n, &fd) < 0){
+    printf("m\n");
     return -1;
-  if(fd < 0 || fd >= NOFILE || (f=myproc()->ofile[fd]) == 0)
+  }
+  if(fd < 0 || fd >= NOFILE || (f=myproc()->ofile[fd]) == 0){
+    printf("fd:%d,f:%d\n",fd,f);
     return -1;
+  }
   if(pfd)
     *pfd = fd;
   if(pf)
@@ -73,9 +77,12 @@ sys_read(void)
   int n;
   uint64 p;
 
-  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &p) < 0)
+  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argaddr(1, &p) < 0){
     return -1;
-  return fileread(f, p, n);
+  }
+  int cc= fileread(f, p, n);
+  //printf(" cc:%d\n",cc);
+  return cc;
 }
 
 uint64
