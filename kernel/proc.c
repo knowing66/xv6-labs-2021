@@ -487,6 +487,8 @@ sched(void)
     panic("sched interruptible");
 
   intena = mycpu()->intena;
+  // printf("sched:proc_%d call swtch.\n",myproc()->pid);
+  // printf("schd:&mycpu()->context.ra: %p\n",mycpu()->context.ra);
   swtch(&p->context, &mycpu()->context);
   mycpu()->intena = intena;
 }
@@ -498,6 +500,7 @@ yield(void)
   struct proc *p = myproc();
   acquire(&p->lock);
   p->state = RUNNABLE;
+  //printf("yield: set proc_%d state to RUNABLE ans call sched func.\n",myproc()->pid);
   sched();
   release(&p->lock);
 }
